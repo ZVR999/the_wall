@@ -8,21 +8,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <a href="/">Login Page</a>
+    <a href="/">Login Page</a><br><br>
+    <a href="/logout">Log Out</a>
     <h1>Post a message</h1>
-    <form action="">
-        <textarea name="boxy" id="" cols="30" rows="10"></textarea><br><br>
+    <form action="/message" method="POST">
+        <textarea name="message" id="boxy" cols="80" rows="4"></textarea><br><br>
         <input type="submit" value="Post a message">
     </form>
     <br><br>
+    
+    <div>
+        {{ posts|safe }}
+    </div>
 
-    <div></div>
-
-    <br><br>
-    <h1>Post a comment</h1>
-    <form action="">
-            <textarea name="boxy" id="" cols="30" rows="10"></textarea><br><br>
-            <input type="submit" value="Post a comment">
-        </form>
 </body>
 </html>

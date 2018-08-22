@@ -1,7 +1,29 @@
-textarea[name=boxy]{
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    padding: 25px;
+}
+
+#boxy {
     resize: none;
 }
  
 h1{
     background-color: aqua;
+    margin: 25px 0px;
+}
+
+h3{
+    background-color: cornflowerblue;
+}
+
+.moveover{
+    margin-left: 25px;
+}
+
+div{
+    font-size: 20px;
 }

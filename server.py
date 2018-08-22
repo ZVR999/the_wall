@@ -12,8 +12,6 @@ mysql = MySQLConnector(app, 'walldb')
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 # RETRIEVE PASSWORD WHEN LOGGING IN
-# salt =  binascii.b2a_hex(os.urandom(15))
-# hashed_password = md5.new(password + salt).hexdigest()
 # user_query = "SELECT * FROM users WHERE users.email = :email LIMIT 1"
 # query_data = {'email': email}
 # user = mysql.query_db(user_query, query_data)
@@ -29,6 +27,7 @@ EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
 # Login Page
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -38,7 +37,17 @@ def index():
 
 @app.route('/wall')
 def wall():
-    return render_template('wall.html')
+    user = session['user']
+    posts = ''
+    query = 'SELECT * FROM messages;'
+    messages = mysql.query_db(query)
+    # Display all messages with names and date when the message was created.
+    for message in messages:
+        posts += '<div>'+user[0]['first_name']+' ' + user[0]['last_name']+' - '+str(message['created_at'])+'</div>'
+        posts += '<div class="moveover">'+message['message']+'</div>'
+        posts += '<br><h3>Post a comment</h3><form action="/comment" method="POST"><textarea name="comment" id="boxy" cols="80" rows="4"></textarea><br><br><input type="submit" value="Post a comment"></form><br>'
+    return render_template('wall.html', posts=posts)
+
 
 # Process/Verify registration
 
@@ -66,7 +75,7 @@ def register():
         flash('First Name must be longer than 2 characters')
         return redirect('/')
 
-    #Last Name Validations
+    # Last Name Validations
     if last_name == '':
         flash('Last name can not be blank')
         return redirect('/')
@@ -109,7 +118,7 @@ def register():
         'password': hashed_password,
         'salt': salt
     }
-    mysql.query_db(query,data)
+    mysql.query_db(query, data)
 
     return redirect('/')
 
@@ -118,7 +127,67 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def login():
+    # Gather data from form
+    email = request.form['email']
+    password = request.form['password']
+
+    # Make sure input fields are not empty
+    if email == '':
+        flash('Email field is empty')
+        return redirect('/')
+    if password == '':
+        flash('Password field is empty')
+        return redirect('/')
+
+    # Search/Select User in database that matches inputted email
+    query = 'SELECT * FROM users WHERE email = :email LIMIT 1;'
+    data = {
+        'email': email
+    }
+    user = mysql.query_db(query, data)
+
+    # Confirm password entered is correct
+    if not user == []:
+        encrypted_password = md5.new(password+user[0]['salt']).hexdigest()
+        if user[0]['password'] == encrypted_password:
+            # If correct, send to The Wall
+            # Link Name of User to all messages and comments
+            if 'user' not in session:
+                session['user'] = user
+            return redirect('/wall')
+        else:
+            flash('Invalid email or password')
+            # If invalid send back to login page
+            return redirect('/')
+
+    return redirect('/')
+
+
+@app.route('/message', methods=['POST'])
+def message():
+    user = session['user']
+    message = request.form['message']
+    # # Insert new message into database
+    query = 'INSERT INTO messages (users_id, message, created_at, updated_at) VALUES (:users_id, :message, now(), now());'
+    data = {
+        'users_id': user[0]['id'],
+        'message': message
+    }
+    mysql.query_db(query, data)
+
     return redirect('/wall')
+
+
+@app.route('/comment')
+def comment():
+
+    return redirect('/wall')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
 
 
 app.run(debug=True)
