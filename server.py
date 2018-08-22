@@ -11,19 +11,6 @@ app.secret_key = 'wn2!f2nCch2cp@2238h23b233p2SVW12n9df'
 mysql = MySQLConnector(app, 'walldb')
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
-# RETRIEVE PASSWORD WHEN LOGGING IN
-# user_query = "SELECT * FROM users WHERE users.email = :email LIMIT 1"
-# query_data = {'email': email}
-# user = mysql.query_db(user_query, query_data)
-
-# if len(user) != 0:
-#     encrypted_password = md5.new(password + user[0]['salt']).hexdigest()
-# if user[0]['password'] == encrypted_password:
-#     session['logged_in'] = 1
-#     return redirect('/success')
-# else:
-#     flash('Invalid email or password')
-#     return redirect('/')
 
 # Login Page
 
@@ -39,13 +26,21 @@ def index():
 def wall():
     user = session['user']
     posts = ''
+    session['message_id'] = 0
+    message_id = session['message_id']
+    # Gather all messages from messages table
     query = 'SELECT * FROM messages;'
     messages = mysql.query_db(query)
     # Display all messages with names and date when the message was created.
     for message in messages:
+        message_id = message['id']
+        query = 'SELECT * FROM messages LEFT JOIN comments ON messages.id = comments.messages_id WHERE messages.id='+str(message_id)+';'
+        comments = mysql.query_db(query)
         posts += '<div>'+user[0]['first_name']+' ' + user[0]['last_name']+' - '+str(message['created_at'])+'</div>'
         posts += '<div class="moveover">'+message['message']+'</div>'
-        posts += '<br><h3>Post a comment</h3><form action="/comment" method="POST"><textarea name="comment" id="boxy" cols="80" rows="4"></textarea><br><br><input type="submit" value="Post a comment"></form><br>'
+        for comment in comments:
+            posts += '<div class="moveovermore">'+comment['comment']+'</div>'
+        posts += '<br><h3>Post a comment</h3><form action="/'+str(message_id)+'/comment" method="POST"><textarea name="comment" id="boxy" cols="80" rows="4"></textarea><br><br><input type="submit" value="Post a comment"></form><br>'
     return render_template('wall.html', posts=posts)
 
 
@@ -177,10 +172,19 @@ def message():
 
     return redirect('/wall')
 
-
-@app.route('/comment')
-def comment():
-
+# Insert comments into db linked to their specific messages
+@app.route('/<message_id>/comment', methods=['POST'])
+def comment(message_id):
+    user = session['user']
+    comment = request.form['comment']
+    # # Insert new message into database
+    query = 'INSERT INTO comments (messages_id, users_id, comment, created_at, updated_at) VALUES (:messages_id, :users_id, :comment, now(), now());'
+    data = {
+        'messages_id': message_id,
+        'users_id': user[0]['id'],
+        'comment': comment
+    }
+    mysql.query_db(query, data)
     return redirect('/wall')
 
 
