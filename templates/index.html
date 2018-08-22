@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Login/Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!-- Link to The Wall -->
     <a href="/wall">The Wall</a>
+    
     <h1>Log In</h1>
+    <!-- Login Form -->
     <form action="/login" method="POST">
         <label for="email">Email: </label>
         <input type="email" name="email"><br><br>
@@ -16,6 +20,7 @@
         <input type="password" name="password"><br><br>
         <input type="submit" value="Login">
     </form>
+    <!-- Registration Form -->
     <h1>Register</h1>
     <form action="/register" method="POST">
         <label for="first_name">First Name: </label>
@@ -30,5 +35,13 @@
         <input type="password" name="confirm_password"><br><br>
         <input type="submit" value="Register">
     </form>
+    <!-- Start of required templating to show flash messages -->
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
 </body>
 </html>
