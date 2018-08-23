@@ -13,40 +13,47 @@ mysql = MySQLConnector(app, 'walldb')
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+$')
 
 # Login Page
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
 # The Wall
-
-
 @app.route('/wall')
 def wall():
-    user = session['user']
+    if 'user' not in session:
+        flash('You must be logged in to see the wall')
+        return redirect('/')
+
     posts = ''
-    session['message_id'] = 0
-    message_id = session['message_id']
+
     # Gather all messages from messages table
-    query = 'SELECT * FROM messages;'
+    query = 'SELECT messages.id, first_name, last_name, message, messages.created_at FROM messages LEFT JOIN users ON users.id = messages.users_id ORDER BY messages.id ASC;'
     messages = mysql.query_db(query)
+    
+    
     # Display all messages with names and date when the message was created.
     for message in messages:
+        # Gather all names linked to messages
         message_id = message['id']
-        query = 'SELECT * FROM messages LEFT JOIN comments ON messages.id = comments.messages_id WHERE messages.id='+str(message_id)+';'
-        comments = mysql.query_db(query)
-        posts += '<div>'+user[0]['first_name']+' ' + user[0]['last_name']+' - '+str(message['created_at'])+'</div>'
+        print message_id
+        posts += '<div class="bold">'+message['first_name']+' ' +message['last_name']+' - '+str(message['created_at'])+'</div>'
         posts += '<div class="moveover">'+message['message']+'</div>'
-        for comment in comments:
-            posts += '<div class="moveovermore">'+comment['comment']+'</div>'
+        
+        query = 'SELECT comments.id, messages_id, first_name, last_name, comment, comments.created_at FROM comments LEFT JOIN users ON users.id = comments.users_id WHERE comments.messages_id ='+str(message_id)+' ORDER BY comments.id;'
+        comments = mysql.query_db(query)
+        print comments
+        # Loop through all comments for each message
+        if comments != []:
+            for comment in comments:
+                if comment['messages_id'] == message_id:
+                    posts += '<div class="moveovermore">'+comment['first_name']+' ' + comment['last_name']+' - '+str(comment['created_at'])+'</div>'
+                    posts += '<div class="comment">'+comment['comment']+'</div>'
         posts += '<br><h3>Post a comment</h3><form action="/'+str(message_id)+'/comment" method="POST"><textarea name="comment" id="boxy" cols="80" rows="4"></textarea><br><br><input type="submit" value="Post a comment"></form><br>'
+        
     return render_template('wall.html', posts=posts)
 
 
 # Process/Verify registration
-
-
 @app.route('/register', methods=['POST'])
 def register():
     # Gather information from form
@@ -115,11 +122,9 @@ def register():
     }
     mysql.query_db(query, data)
 
-    return redirect('/')
+    return redirect('/wall')
 
 # Process/Verify Login
-
-
 @app.route('/login', methods=['POST'])
 def login():
     # Gather data from form
@@ -154,10 +159,13 @@ def login():
             flash('Invalid email or password')
             # If invalid send back to login page
             return redirect('/')
-
+    else:
+        flash('Invalid email or password')
+        # If invalid send back to login page
+        return redirect('/')
     return redirect('/')
 
-
+# Insert messages into db linked to specific users
 @app.route('/message', methods=['POST'])
 def message():
     user = session['user']
@@ -188,6 +196,7 @@ def comment(message_id):
     return redirect('/wall')
 
 
+# Log out current user
 @app.route('/logout')
 def logout():
     session.clear()

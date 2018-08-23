@@ -1,12 +1,20 @@
 *{
     margin: 0;
     padding: 0;
+    text-align: center;
 }
 
 body{
-    padding: 25px;
+    border: 3px solid black;
+    border-style: double;
+    padding: 50px;
 }
 
+input{
+    text-align: left;
+}
+
+/* Rid of the resize on textare boxes */
 #boxy {
     resize: none;
 }
@@ -14,10 +22,13 @@ body{
 h1{
     background-color: aqua;
     margin: 25px 0px;
+    border: 1px solid purple;
 }
 
 h3{
+    border: 2px solid slategrey;
     background-color: cornflowerblue;
+    margin-bottom: 25px;
 }
 
 .moveover{
@@ -26,8 +37,23 @@ h3{
 
 .moveovermore{
     margin-left: 50px;
+    font-weight: bold;
+    color: blue;
 }
 
 div{
     font-size: 20px;
 }
+
+.bold{
+    font-weight: bold;
+}
+
+.comment{
+    margin-left: 50px;
+    color: green;
+}
+
+
+
+
